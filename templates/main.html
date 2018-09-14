@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mazgan</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+    <script>
+        window.addEventListener("load", function () {
+            function sendData(form) {
+                var XHR = new XMLHttpRequest();
+
+                // Bind the FormData object and the form element
+                var FD = new FormData(form);
+
+                // Define what happens on successful data submission
+                XHR.addEventListener("load", function (event) {
+                    var json = JSON.parse(event.target.responseText);
+                    document.getElementById("result").innerHTML = json.result;
+                });
+
+                // Define what happens in case of error
+                XHR.addEventListener("error", function (event) {
+                    //var txt = event.target.responseText;
+                    document.getElementById("result").innerHTML = "error";
+                });
+
+                // Set up our request
+                XHR.open("POST", form.target);
+
+                // The data sent is what the user provided in the form
+                XHR.send(FD);
+            }
+
+            function override_submit(form) {
+                form.addEventListener("submit", function (event) {
+                    event.preventDefault();
+                    sendData(form);
+                });
+            }
+
+            var slider = document.getElementById("tempslider");
+            var output = document.getElementById("tempvalue");
+            output.innerHTML = slider.value; // Display the default slider value
+
+            // Update the current slider value (each time you drag the slider handle)
+            slider.oninput = function () {
+                output.innerHTML = this.value;
+            }
+
+            override_submit(document.getElementById("turnon"));
+            override_submit(document.getElementById("turnoff"));
+
+        });
+    </script>
+</head>
+
+<body>
+    <div class="jumbotron text-center">
+      <h4>Mazgan</h4>
+      <p>Welcome, {{ request.authorization.username }} </p>
+      <span id="result">Waiting for your command</span>
+    </div>
+    <div class="container">
+        <form id="turnon" target="/on" method="POST">
+                <div class="form-group row">
+                    <label for="tempslider" class="col-form-label col-sm-12 col-xs-12">Temperature: <span id="tempvalue"></span></label>
+                    <input type="range"     class="form-control-range col-sm-12 col-xs-12" id="tempslider" name="temperature" min="16" max="30" value="{{state.get('temp')}}"/>
+                </div>
+              {% for (k,v) in opt.iteritems() %}
+                <div class="form-group row">
+                    <label for="{{k}}" class="col-sm-2 col-xs-2 col-form-label">{{k}}</label>
+                    <div class="col-sm-10 col-xs-10">
+                        <select class="form-control" id="{{k}}" name="{{k}}">
+                            {% for i in v %}
+                            <option value="{{i}}" {{"selected" if i == state.get(k) else ""}}>{{i}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+              {% endfor %}
+                <div class="form-group row">
+                    <input type="submit" class="btn btn-block btn-lg btn-primary" role="button" name="action" value="On"/>
+                </div>
+
+        </form>
+        <form id="turnoff" target="/off" method="POST">
+            <div class="form-group row">
+                <input type="submit" class="btn btn-block btn-lg btn-primary" role="button" name="action" value="Off"/>
+            </div>
+        </form>
+
+    </div>
+
+
+</body>
+</html>
