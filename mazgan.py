@@ -127,6 +127,7 @@ class Mazgan(object):
         0   byte        = 0x00000001            (00000001 <=> 10000000)
         8   half-byte  	= mode: cool = 	  1     (    0001 <=>     1000)
                                 heat =    2     (    0010 <=>     0100)
+                                fan  =    3     (    0011 <=>     1100)                                
                                 defrost = 4     (    0100 <=>     0010)
                                 auto =    5     (    0101 <=>     1010)
         12  half-byte   = fan:  low =     1     (    0001 <=>     1000)

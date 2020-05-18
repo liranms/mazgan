@@ -6,6 +6,7 @@ STATE_FILENAME = "/var/www/mazgan.state"
 class Mode(Enum):
     cool = 1
     heat = 2
+    fan = 3    
     defrost = 4
     auto = 5
 
