@@ -4,7 +4,7 @@ import subprocess
 from flask import Flask, render_template, request, Response, jsonify
 from functools import wraps
 from options import *
-from secrets import *
+from mazgan_secrets import *
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
@@ -36,29 +36,32 @@ def requires_auth(f):
 
 def ir_send(button):
     try:
+        # return button
         return subprocess.check_output(
-            ["/usr/bin/irsend", "-d" "/var/run/lirc/lircd-lirc0", "send_once", REMOTE_NAME, button])
-    except Exception, e:
+            #  "-d" "/var/run/lirc/lircd-lirc0"
+            ["/usr/bin/irsend", "--count=2", "send_once", REMOTE_NAME, button])
+    except Exception as e:
         traceback.print_exc()
         return "Failure: %s" % (e,)
 
 
-def make_state(temp=24, fan=Fan.auto, energy=Energy.auto, mode=Mode.cool):
+def make_state(temp=24, fan=Fan.auto, energy=Energy.auto, mode=Mode.cool, state=State.on):
     return {"temp": temp,
-            Fan.__name__: fan.name,
-            Energy.__name__: energy.name,
-            Mode.__name__: mode.name
+            Fan.__name__: str(fan.name),
+            Energy.__name__: str(energy.name),
+            Mode.__name__: str(mode.name),
+            "state": str(state.name),
             }
 
 
 def save_state(s):
-    with open(STATE_FILENAME, "w") as f:
+    with open(STATE_FILENAME, "wt") as f:
         json.dump(s, f)
 
 
 def load_state():
     try:
-        with open(STATE_FILENAME, "r") as f:
+        with open(STATE_FILENAME, "rt") as f:
             return json.load(f)
     except:
         traceback.print_exc()
@@ -69,7 +72,7 @@ def load_state():
 @requires_auth
 def home():
     opt = {Fan.__name__: [i.name for i in Fan],
-           Energy.__name__: [i.name for i in Energy],
+           # Energy.__name__: [i.name for i in Energy],
            Mode.__name__: [i.name for i in Mode]
            }
     state = load_state()
@@ -81,13 +84,14 @@ def home():
 def set():
     temp = int(request.form.get('temperature', 25))
     fan = Fan[request.form.get(Fan.__name__, Fan.auto.name)]
-    energy = Energy[request.form.get(Energy.__name__, Energy.auto.name)]
+    # energy = Energy[request.form.get(Energy.__name__, Energy.auto.name)]
+    energy = Energy.auto
     mode = Mode[request.form.get(Mode.__name__, Mode.cool.name)]
     btn = make_name(State.on, temp, fan, energy, mode)
-    state = make_state(temp, fan, energy, mode)
+    state = make_state(temp, fan, energy, mode, State.on)
     output = ir_send(btn)
     save_state(state)
-    return jsonify({"result": "turning on. %s" % (output,),
+    return jsonify({"result": "turnned on (%s %sC@%s). %s" % (mode.name, temp, fan.name, str(output, "utf-8"),),
                     "button": btn})
 
 
@@ -95,7 +99,9 @@ def set():
 @requires_auth
 def turn_off():
     output = ir_send("OFF")
-    return jsonify({"result": "turning off. %s" % (output,)})
+    state = make_state(state=State.off)
+    save_state(state)
+    return jsonify({"result": "turnned off. %s" % (str(output, "utf-8"),)})
 
 
 if __name__ == '__main__':

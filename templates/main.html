@@ -41,6 +41,7 @@
             function override_submit(form) {
                 form.addEventListener("submit", function (event) {
                     event.preventDefault();
+                    document.getElementById("result").innerHTML = "sending command...";
                     sendData(form);
                 });
             }
@@ -54,8 +55,10 @@
                 output.innerHTML = this.value;
             }
 
-            override_submit(document.getElementById("turnon"));
-            override_submit(document.getElementById("turnoff"));
+            const forms = document.getElementsByTagName("form")
+            for (let i = 0; i < forms.length; i++) {
+                override_submit(forms[i]);
+            }
 
         });
     </script>
@@ -63,9 +66,8 @@
 
 <body>
     <div class="jumbotron text-center">
-      <h4>Mazgan</h4>
-      <p>Welcome, {{ request.authorization.username }} </p>
-      <span id="result">Waiting for your command</span>
+      <p>Hi, {{ request.authorization.username }} </p>
+      <span id="result">Mazgan is {{state.get('state')}} {{state.get('Mode')}} {{state.get('temp')}}C@{{state.get('Fan')}}</span>
     </div>
     <div class="container">
         <form id="turnon" target="/on" method="POST">
@@ -73,7 +75,7 @@
                     <label for="tempslider" class="col-form-label col-sm-12 col-xs-12">Temperature: <span id="tempvalue"></span></label>
                     <input type="range"     class="form-control-range col-sm-12 col-xs-12" id="tempslider" name="temperature" min="16" max="30" value="{{state.get('temp')}}"/>
                 </div>
-              {% for (k,v) in opt.iteritems() %}
+              {% for (k,v) in opt.items() %}
                 <div class="form-group row">
                     <label for="{{k}}" class="col-sm-2 col-xs-2 col-form-label">{{k}}</label>
                     <div class="col-sm-10 col-xs-10">
@@ -92,10 +94,54 @@
         </form>
         <form id="turnoff" target="/off" method="POST">
             <div class="form-group row">
-                <input type="submit" class="btn btn-block btn-lg btn-primary" role="button" name="action" value="Off"/>
+                <input type="submit" class="btn btn-block btn-lg btn-danger" role="button" name="action" value="Off"/>
             </div>
         </form>
+        <div class="row">
+            <div class="form-group col-sm">
+                <form id="justfan" target="/on" method="POST">
+                    <input type="hidden" name="temperature" value="25"/>
+                    <input type="hidden" name="Energy" id="Energy" value="auto"/>
+                    <input type="hidden" name="Fan" id="Fan" value="low"/>
+                    <input type="hidden" name="Mode" id="Mode" value="fan"/>
+                    <input type="hidden" name="action" id="action" value="on"/>
+                    <input type="submit" class="btn btn-block btn-sm btn-secondary" role="button" name="action" value="Just Fan"/>
+                </form>
+            </div>
 
+            <div class="form-group col-sm">
+                <form id="cool24C" target="/on" method="POST">
+                    <input type="hidden" name="temperature" value="24"/>
+                    <input type="hidden" name="Energy" id="Energy" value="auto"/>
+                    <input type="hidden" name="Fan" id="Fan" value="low"/>
+                    <input type="hidden" name="Mode" id="Mode" value="cool"/>
+                    <input type="hidden" name="action" id="action" value="on"/>
+                    <input type="submit" class="btn btn-block btn-sm btn-secondary" role="button" name="action" value="Cool 24C"/>
+                </form>
+            </div>
+
+            <div class="form-group col-sm">
+                <form id="freezer" target="/on" method="POST">
+                    <input type="hidden" name="temperature" value="16"/>
+                    <input type="hidden" name="Energy" id="Energy" value="auto"/>
+                    <input type="hidden" name="Fan" id="Fan" value="high"/>
+                    <input type="hidden" name="Mode" id="Mode" value="cool"/>
+                    <input type="hidden" name="action" id="action" value="on"/>
+                    <input type="submit" class="btn btn-block btn-sm btn-secondary" role="button" name="action" value="Freezer"/>
+                </form>
+            </div>
+
+            <div class="form-group col-sm">
+                <form id="night" target="/on" method="POST">
+                    <input type="hidden" name="temperature" value="25"/>
+                    <input type="hidden" name="Energy" id="Energy" value="night"/>
+                    <input type="hidden" name="Fan" id="Fan" value="low"/>
+                    <input type="hidden" name="Mode" id="Mode" value="cool"/>
+                    <input type="hidden" name="action" id="action" value="on"/>
+                    <input type="submit" class="btn btn-block btn-sm btn-secondary" role="button" name="action" value="Night"/>
+                </form>
+            </div>
+        </div>
     </div>
 
 
